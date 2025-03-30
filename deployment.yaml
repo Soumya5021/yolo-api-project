@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yolo-api
+  labels:
+    app: yolo-api
+spec:
+  replicas: 2  # Number of pods
+  selector:
+    matchLabels:
+      app: yolo-api
+  template:
+    metadata:
+      labels:
+        app: yolo-api
+    spec:
+      containers:
+      - name: yolo-api
+        image: 730335471963.dkr.ecr.us-west-2.amazonaws.com/yolo-api:latest  # Your ECR URI
+        ports:
+        - containerPort: 8000  # Must match your FastAPI port
+        env:
+        - name: YOLO_CONFIG_DIR
+          value: "/tmp/ultralytics"  # For model storage
+        - name: MPLCONFIGDIR
+          value: "/tmp/matplotlib"   # For matplotlib cache
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"  # Adjust based on model size
+        volumeMounts:
+        - mountPath: /tmp  # Writable space for models/cache
+          name: temp-vol
+      volumes:
+      - name: temp-vol
+        emptyDir: {}  # Temporary storage
+
+       
+       
+       
+       
+ --- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: yolo-api
+  namespace: yolo-production
+spec:
+  selector:
+    app: yolo-api
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: LoadBalancer
